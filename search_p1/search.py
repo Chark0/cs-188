@@ -75,6 +75,13 @@ def tinyMazeSearch(problem: SearchProblem) -> List[Directions]:
     w = Directions.WEST
     return  [s, s, w, s, w, w, s, w]
 
+# def is_valid_position(pos):
+#     x, y = pos
+#     # Check bounds and walls
+#     return (0 <= x < grid_width and 
+#             0 <= y < grid_height and 
+#             pos not in walls)
+
 def depthFirstSearch(problem: SearchProblem) -> List[Directions]:
     """
     Search the deepest nodes in the search tree first.
@@ -84,12 +91,46 @@ def depthFirstSearch(problem: SearchProblem) -> List[Directions]:
 
     To get started, you might want to try some of these simple commands to
     understand the search problem that is being passed in:
+    
+    So we get the start, then possible edges, would it be
+    d[node] = [edge1, edge2, ...] ?
+    and array of these nodes down edge order, stack
 
+    (successor, action, stepCost)
+
+    maybe we don't need a is valid check since we should only get valid successors
+
+   
+    """
     print("Start:", problem.getStartState())
     print("Is the start a goal?", problem.isGoalState(problem.getStartState()))
     print("Start's successors:", problem.getSuccessors(problem.getStartState()))
-    """
-    "*** YOUR CODE HERE ***"
+
+    stack = util.Stack()
+    visited = set()  # To keep track of visited nodes
+
+    stack.push((problem.getStartState(), []))  # Start with the initial state and an empty path
+
+    while not stack.isEmpty():
+        current_state, path = stack.pop()
+        current_cost = 0
+
+        # check for the goal state
+        if problem.isGoalState(current_state):
+            return path
+        
+        # check if the current state has been visited (redundancies possible? not ideal)
+        if current_state not in visited:
+            visited.add(current_state)
+
+            # check the successor state possibilities from the current state
+            for successor, action, stepCost in problem.getSuccessors(current_state):
+                new_path = path + [action] # update action path to the new state
+                new_cost = current_cost + stepCost #TODO work cost into pathfinding, later
+                stack.push((successor, new_path))
+
+        return [] # If no path found, return empty list
+
     util.raiseNotDefined()
 
 def breadthFirstSearch(problem: SearchProblem) -> List[Directions]:
