@@ -109,11 +109,15 @@ def depthFirstSearch(problem: SearchProblem) -> List[Directions]:
     stack = util.Stack()
     visited = set()  # To keep track of visited nodes
 
-    stack.push((problem.getStartState(), []))  # Start with the initial state and an empty path
+    stack.push((problem.getStartState(), [], 0))  # Start with the initial state and an empty path, 0 cost
 
     while not stack.isEmpty():
-        current_state, path = stack.pop()
-        current_cost = 0
+        current_state, path, current_cost  = stack.pop()
+
+        # print("Current state:", current_state)
+        # print("Current path:", path)
+        # print("Current cost:", current_cost)
+        # print("Visited states:", visited)
 
         # check for the goal state
         if problem.isGoalState(current_state):
@@ -125,13 +129,14 @@ def depthFirstSearch(problem: SearchProblem) -> List[Directions]:
 
             # check the successor state possibilities from the current state
             for successor, action, stepCost in problem.getSuccessors(current_state):
-                new_path = path + [action] # update action path to the new state
-                new_cost = current_cost + stepCost #TODO work cost into pathfinding, later
-                stack.push((successor, new_path))
+                new_path = path + [action]
+                new_cost = current_cost + stepCost 
+                stack.push((successor, new_path, new_cost))
 
-        return [] # If no path found, return empty list
 
     util.raiseNotDefined()
+    return [] # If no path found, return empty list
+
 
 def breadthFirstSearch(problem: SearchProblem) -> List[Directions]:
     """Search the shallowest nodes in the search tree first."""
