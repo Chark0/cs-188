@@ -100,37 +100,43 @@ def depthFirstSearch(problem: SearchProblem) -> List[Directions]:
 
     maybe we don't need a is valid check since we should only get valid successors
 
-   
+   why am I double expanding the start node?
+   counting it as visited, but then maybe we don't need to pop until end of the loop?
+
+   get successors was the expand failure, had to look and see that was adding 1 to the count for that node
     """
-    print("Start:", problem.getStartState())
-    print("Is the start a goal?", problem.isGoalState(problem.getStartState()))
-    print("Start's successors:", problem.getSuccessors(problem.getStartState()))
+
+
+    start = problem.getStartState()
+    print("Start:", start)
+    print("Is the start a goal?", problem.isGoalState(start))
 
     stack = util.Stack()
     visited = set()  # To keep track of visited nodes
 
-    stack.push((problem.getStartState(), [], 0))  # Start with the initial state and an empty path, 0 cost
+    stack.push((start, [], 0))
 
     while not stack.isEmpty():
-        current_state, path, current_cost  = stack.pop()
+        current_state, path, cost = stack.pop()
 
-        # print("Current state:", current_state)
-        # print("Current path:", path)
-        # print("Current cost:", current_cost)
-        # print("Visited states:", visited)
+        if current_state in visited:
+            continue
+
+        # Mark current state as visited when you process it
+        visited.add(current_state)
 
         # check for the goal state
         if problem.isGoalState(current_state):
+            print("Path to goal length:", len(path))
+            print("Cost to goal:", cost)
             return path
-        
-        # check if the current state has been visited (redundancies possible? not ideal)
-        if current_state not in visited:
-            visited.add(current_state)
 
-            # check the successor state possibilities from the current state
-            for successor, action, stepCost in problem.getSuccessors(current_state):
+        # check the successor state possibilities from the current state
+        for successor, action, stepCost in problem.getSuccessors(current_state):
+            # Don't want to add if already visited 
+            if successor not in visited:
                 new_path = path + [action]
-                new_cost = current_cost + stepCost 
+                new_cost = cost + stepCost 
                 stack.push((successor, new_path, new_cost))
 
 
