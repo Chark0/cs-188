@@ -122,7 +122,7 @@ def depthFirstSearch(problem: SearchProblem) -> List[Directions]:
         if current_state in visited:
             continue
 
-        # Mark current state as visited when you process it
+        # Mark current state as visited
         visited.add(current_state)
 
         # check for the goal state
@@ -145,14 +145,86 @@ def depthFirstSearch(problem: SearchProblem) -> List[Directions]:
 
 
 def breadthFirstSearch(problem: SearchProblem) -> List[Directions]:
-    """Search the shallowest nodes in the search tree first."""
-    "*** YOUR CODE HERE ***"
+    """Search the shallowest nodes in the search tree first.
+    
+    try making a queue in place of the stack"""
+    
+
+    start = problem.getStartState()
+    print("Start:", start)
+    print("Is the start a goal?", problem.isGoalState(start))
+
+    q = util.Queue()
+    visited = set()  # To keep track of visited nodes
+
+    q.push((start, [], 0))
+
+    while not q.isEmpty():
+        current_state, path, cost = q.pop()
+
+        if current_state in visited:
+            continue
+
+        # Mark current state as visited
+        visited.add(current_state)
+
+        # check for the goal state
+        if problem.isGoalState(current_state):
+            print("Path to goal length:", len(path))
+            print("Cost to goal:", cost)
+            return path
+
+        # check the successor state possibilities from the current state
+        for successor, action, stepCost in problem.getSuccessors(current_state):
+            # Don't want to add if already visited
+            if successor not in visited:
+                new_path = path + [action]
+                new_cost = cost + stepCost 
+                q.push((successor, new_path, new_cost))
+
+
     util.raiseNotDefined()
+    return [] # If no path found, return empty list
+
+
 
 def uniformCostSearch(problem: SearchProblem) -> List[Directions]:
     """Search the node of least total cost first."""
-    "*** YOUR CODE HERE ***"
+    start = problem.getStartState()
+    print("Start:", start)
+    print("Is the start a goal?", problem.isGoalState(start))
+
+    pQueue = util.PriorityQueue()
+    visited = set()  # To keep track of visited nodes
+
+    pQueue.push((start, [], 0), 0)
+
+    while not pQueue.isEmpty():
+        current_state, path, cost = pQueue.pop()
+
+        if current_state in visited:
+            continue
+
+        # Mark current state as visited
+        visited.add(current_state)
+
+        # check for the goal state
+        if problem.isGoalState(current_state):
+            print("Path to goal length:", len(path))
+            print("Cost to goal:", cost)
+            return path
+
+        # check the successor state possibilities from the current state
+        for successor, action, stepCost in problem.getSuccessors(current_state):
+            # Don't want to add if already visited
+            if successor not in visited:
+                new_path = path + [action]
+                new_cost = cost + stepCost 
+                pQueue.push((successor, new_path, new_cost), new_cost)
+
+
     util.raiseNotDefined()
+    return [] # If no path found, return empty list
 
 def nullHeuristic(state, problem=None) -> float:
     """
