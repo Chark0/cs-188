@@ -295,15 +295,23 @@ class CornersProblem(search.SearchProblem):
         Returns the start state (in your state space, not the full Pacman state
         space)
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        corners_visited = []
+        for corner in self.corners:
+            if self.startingPosition == corner:
+                corners_visited.append(True)   # We start at this corner
+            else:
+                corners_visited.append(False)  # We don't start at this corner
+        
+        return (self.startingPosition, tuple(corners_visited))
 
     def isGoalState(self, state: Any):
         """
         Returns whether this search state is a goal state of the problem.
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        position, corners_visited = state
+        # Goal is when all corners have been visited
+        return all(corners_visited)
+            
 
     def getSuccessors(self, state: Any):
         """
@@ -317,17 +325,33 @@ class CornersProblem(search.SearchProblem):
         """
 
         successors = []
+        cost = 1
+
+        position, corners_visited = state
+        x,y = position
+
         for action in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
-            # Add a successor state to the successor list if the action is legal
-            # Here's a code snippet for figuring out whether a new position hits a wall:
-            #   x,y = currentPosition
-            #   dx, dy = Actions.directionToVector(action)
-            #   nextx, nexty = int(x + dx), int(y + dy)
-            #   hitsWall = self.walls[nextx][nexty]
+            
+            dx, dy = Actions.directionToVector(action)
+            nextx, nexty = int(x + dx), int(y + dy)
+            next_position = (nextx, nexty)
+            # check we are not hitting a wall
+            if not self.walls[nextx][nexty]:
+                # Check if we are visiting a corner
+                next_corners_visited = list(corners_visited)
+                
+                for i, corner in enumerate(self.corners):
+                    if next_position == corner:
+                        next_corners_visited[i] = True  
 
-            "*** YOUR CODE HERE ***"
+                next_corners_visited = tuple(next_corners_visited)
+                new_state = (next_position, next_corners_visited)
+                
+                successors.append((new_state, action, cost))
 
+        # Bookkeeping for display purposes
         self._expanded += 1 # DO NOT CHANGE
+
         return successors
 
     def getCostOfActions(self, actions):
