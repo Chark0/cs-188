@@ -489,9 +489,143 @@ def foodHeuristic(state: Tuple[Tuple, List[List]], problem: FoodSearchProblem):
     problem.heuristicInfo['wallCount']
     """
     position, foodGrid = state
-    "*** YOUR CODE HERE ***"
-    return 0
+    food_list = foodGrid.asList()
+    if not food_list:
+        return 0
+    
+    # if only one food left use distance to it
+    if len(food_list) == 1:
+        return util.manhattanDistance(position, food_list[0])
+    
+    # Points to connect: current position + all remaining food (position first for MST)
+    all_points = [position] + food_list
+    
+    # Calculate MST cost
+    # mst_cost = calculateMST(all_points)
+    mst_cost = calculate_wall_aware_MST(all_points, problem.walls)
 
+    return mst_cost 
+
+def calculate_wall_aware_MST(points, walls):
+    """MST using wall-penalized distances"""
+    if len(points) <= 1:
+        return 0
+    
+    in_tree = {0}
+    total_cost = 0
+    
+    while len(in_tree) < len(points):
+        min_cost = float('inf')
+        best_endpoint = None
+        
+        for tree_node in in_tree:
+            for outside_node in range(len(points)):
+                if outside_node not in in_tree:
+                    # Wall-aware distance
+                    base_dist = util.manhattanDistance(points[tree_node], points[outside_node])
+                    wall_penalty = calculateWallPenalty(points[tree_node], points[outside_node], walls)
+                    total_dist = base_dist + wall_penalty
+                    
+                    if total_dist < min_cost:
+                        min_cost = total_dist
+                        best_endpoint = outside_node
+        
+        in_tree.add(best_endpoint)
+        total_cost += min_cost
+    
+    return total_cost
+
+def calculateWallPenalty(start, end, walls):
+    """
+    Calculate penalty based on walls between two points
+    """
+    x1, y1 = start
+    x2, y2 = end
+    
+    # Sample points along the path
+    steps = max(abs(x2 - x1), abs(y2 - y1))
+    
+    if steps == 0:
+        return 0
+    
+    wall_count = 0
+    sample_points = min(steps + 1, 6)  # Sample at most 6 points for efficiency
+    
+    for i in range(sample_points):
+        # Linear interpolation along the path
+        t = i / (sample_points - 1) if sample_points > 1 else 0
+        x = int(x1 + t * (x2 - x1))
+        y = int(y1 + t * (y2 - y1))
+        
+        # Check if position is within bounds and is a wall
+        if (0 <= x < walls.width and 
+            0 <= y < walls.height and 
+            walls[x][y]):
+            wall_count += 1
+    
+    # Convert wall count to penalty
+    penalty = wall_count * 0.5  # Penalty factor - adjust as needed
+    return penalty
+
+def calculateMST(points):
+    """
+    Calculate Minimum Spanning Tree using Prim's algorithm
+    """
+    if len(points) <= 1:
+        return 0
+    
+    """
+    Prim's algorithm builds MST by growing a tree one edge at a time
+    """
+    # Step 1: Start with any point (usually first one)
+    in_tree = {0}  # Points already in our tree, current position index 0
+    total_cost = 0
+    edges_used = []
+    
+    # Step 2: Repeat until all points are connected
+    while len(in_tree) < len(points):
+        
+        # Step 3: Find cheapest edge from tree to outside
+        min_cost = float('inf')
+        best_edge = None
+        
+        for inside_point in in_tree:
+            for outside_point in range(len(points)):
+                if outside_point not in in_tree:
+                    cost = util.manhattanDistance(points[inside_point], points[outside_point])
+                    if cost < min_cost:
+                        min_cost = cost
+                        best_edge = (inside_point, outside_point)
+        
+        # Step 4: Add cheapest edge to tree
+        in_tree.add(best_edge[1])
+        total_cost += min_cost
+        edges_used.append(best_edge)
+    
+    return total_cost
+  
+def estimate_tour_completion(points):
+    """
+    Estimate additional cost to make MST tour-like
+    """
+    if len(points) <= 2:
+        return 0
+    
+    # Method 1: Two shortest edges approach
+    all_distances = []
+    for i in range(len(points)):
+        for j in range(i + 1, len(points)):
+            dist = util.manhattanDistance(points[i], points[j])
+            all_distances.append(dist)
+    
+    all_distances.sort()
+    
+    # MST uses (n-1) edges, tour needs roughly n edges
+    # Add cost of next shortest edges (conservative)
+    additional_edges = min(2, len(all_distances) - (len(points) - 1))
+    completion_cost = sum(all_distances[len(points)-1:len(points)-1+additional_edges])
+    
+    return completion_cost * 0.5  # Conservative factor for admissibility
 
 class ClosestDotSearchAgent(SearchAgent):
     "Search for all food using a sequence of searches"
