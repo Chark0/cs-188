@@ -172,7 +172,60 @@ class MinimaxAgent(MultiAgentSearchAgent):
         Returns whether or not the game state is a losing state
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        # get ghost indices
+        ghostIdx = [i for i in range(1, gameState.getNumAgents())]
+
+        def minValue(state, depth, ghost):
+            """
+            Returns the minimum value of the game state for the ghost agent.
+            """
+            if terminalState(state, depth):
+                return self.evaluationFunction(state)
+
+            minValue = float('inf')
+            legalActions = state.getLegalActions(ghost)
+
+            for action in legalActions:
+                if ghost == ghostIdx[-1]:
+                    value = min(value, maxValue(state.generateSuccessor(ghost, action), depth + 1))
+                else:
+                    value = min(value, minValue(state.generateSuccessor(ghost, action), depth, ghost + 1))
+
+            return value
+        
+        def maxValue(state, depth):
+            """
+            Returns the maximum value of the game state for Pacman.
+            """
+            if terminalState(state, depth):
+                return self.evaluationFunction(state)
+
+            maxValue = float('-inf')
+            legalActions = state.getLegalActions(0)
+
+            for action in legalActions:
+                successorState = state.generateSuccessor(0, action)
+                value = minValue(successorState, depth, ghostIdx[0])
+                
+                if value > maxValue:
+                    maxValue = value
+
+            return maxValue
+        
+        def terminalState(state, depth):
+            return state.isWin() or state.isLose() or depth == self.depth
+        
+        
+        res = []
+        for action in gameState.getLegalActions(0):
+            successor_state = gameState.generateSuccessor(0, action)
+            min_score = minValue(successor_state, 0, ghostIdx[0])
+            tuple_result = (action, min_score)
+            res.append(tuple_result)
+        
+        # Find the action with the maximum score sort the result and take the first action
+        res.sort(key=lambda x: x[1], reverse=True)
+        return res[0][0]
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
