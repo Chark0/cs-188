@@ -366,10 +366,71 @@ def betterEvaluationFunction(currentGameState: GameState):
     Your extreme ghost-hunting, pellet-nabbing, food-gobbling, unstoppable
     evaluation function (question 5).
 
-    DESCRIPTION: <write something here so we know what you did>
+    DESCRIPTION: Add to score when close to food, and capsules - when chosts are close
+    then ghosts when they are scared
     """
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+
+    # Terminal states - handle win/lose immediately
+    if currentGameState.isWin():
+        return float('inf')  # Winning is infinitely good!
+    if currentGameState.isLose():
+        return float('-inf')  # Losing is infinitely bad!
+    
+    
+    # get state info
+    score = currentGameState.getScore()
+    pacmanPos = currentGameState.getPacmanPosition()
+    ghostStates = currentGameState.getGhostStates()
+    foodList = currentGameState.getFood().asList()
+    capsuleList = currentGameState.getCapsules()
+
+    heavy_mod = 100
+    medium_mod = 50
+    light_mod = 20
+
+    ghost_weight = 100
+
+    # food evaluation
+    if foodList:
+        closestFoodDist = min(manhattanDistance(pacmanPos, food) for food in foodList)
+        score += heavy_mod / (closestFoodDist + 1)  # Reward being closer to food
+        score -= len(foodList) * heavy_mod  # Penalty for remaining food
+
+    # ghost evaluation
+    for ghost in ghostStates:
+        ghostPos = ghost.getPosition()
+        ghostDist = manhattanDistance(pacmanPos, ghostPos)
+        g_dist_reciprocal = (1 / max(ghostDist, 0.1))
+
+        if ghost.scaredTimer > 0:
+            # Chase scared ghosts for points
+            if ghostDist > 0:
+                score += heavy_mod * ghost_weight * g_dist_reciprocal # slight bonus reward
+        else:
+            # Avoid active ghosts
+            if ghostDist <= 1:
+                score -= heavy_mod * ghost_weight * g_dist_reciprocal  # Heavy penalty
+            elif ghostDist <= 3:
+                score -= ghost_weight * g_dist_reciprocal  # normalized penalty
+    
+    # capsule evaluation
+    for capsule in capsuleList:
+        capsuleDistance = manhattanDistance(pacmanPos, capsule)
+        
+        # Encourage getting capsules when ghosts are nearby
+        nearbyGhosts = sum(1 for ghost in ghostStates 
+                          if manhattanDistance(pacmanPos, ghost.getPosition()) <= 5 
+                          and ghost.scaredTimer == 0)
+        
+        if nearbyGhosts > 0:
+            # More valuable when ghosts are threats
+            score += (ghost_weight * nearbyGhosts) / (capsuleDistance + 1)
+        else:
+            # Still valuable but less urgent
+            score += ghost_weight / (capsuleDistance + 1)
+
+    return score
+    
 
 # Abbreviation
 better = betterEvaluationFunction
